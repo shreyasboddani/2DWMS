@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { createApplication } from "../server/index.ts";
-import { runtimeConfig } from "../server/runtime.ts";
+import { createApplication } from "../server/index.js";
+import { runtimeConfig } from "../server/runtime.js";
 
 let application: ReturnType<typeof createApplication> | undefined;
 export default async function handler(

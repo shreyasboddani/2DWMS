@@ -1,5 +1,5 @@
-import { generateLayout } from "./warehouse";
-import type { Warehouse } from "./warehouse";
+import { generateLayout } from "./warehouse.js";
+import type { Warehouse } from "./warehouse.js";
 
 /** Physical quantities exclude truck manifests, which reference the same stock. */
 export function operationalSummary(warehouse: Warehouse, now = Date.now()) {

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { designSchema, generateDesignLayout } from "./design";
-import { imageUrlSchema } from "./media";
-import { formatFeet } from "./units";
+import { designSchema, generateDesignLayout } from "./design.js";
+import { imageUrlSchema } from "./media.js";
+import { formatFeet } from "./units.js";
 
 export const templates = [
   {

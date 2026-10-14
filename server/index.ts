@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { openDatabase } from "./database.ts";
+import { openDatabase } from "./database.js";
 import {
   randomBytes,
   randomUUID,
@@ -13,13 +13,13 @@ import { readFileSync, existsSync, statSync } from "node:fs";
 import { resolve, extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
-import { imageUploadSchema, imageSignature } from "../src/domain/media.ts";
-import { draftInputSchema } from "../src/domain/drafts.ts";
+import { imageUploadSchema, imageSignature } from "../src/domain/media.js";
+import { draftInputSchema } from "../src/domain/drafts.js";
 import {
   applyAutomation,
   automationCommandSchema,
-} from "../src/domain/automation.ts";
-import type { DesignDraft, DraftInput } from "../src/domain/drafts.ts";
+} from "../src/domain/automation.js";
+import type { DesignDraft, DraftInput } from "../src/domain/drafts.js";
 import {
   configSchema,
   generateLayout,
@@ -28,11 +28,11 @@ import {
   validateRecordChange,
   validateRecord,
   exampleWarehouse,
-} from "../src/domain/warehouse.ts";
-import type { Warehouse, Activity } from "../src/domain/warehouse.ts";
-import { importCsv } from "../src/domain/csv.ts";
-import { applyOperation, operationSchema } from "../src/domain/operations.ts";
-import { runtimeConfig } from "./runtime.ts";
+} from "../src/domain/warehouse.js";
+import type { Warehouse, Activity } from "../src/domain/warehouse.js";
+import { importCsv } from "../src/domain/csv.js";
+import { applyOperation, operationSchema } from "../src/domain/operations.js";
+import { runtimeConfig } from "./runtime.js";
 
 const scrypt = promisify(scryptCallback);
 const credentials = z.object({

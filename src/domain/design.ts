@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Layout, Location, WarehouseConfig, Zone } from "./warehouse";
+import type { Layout, Location, WarehouseConfig, Zone } from "./warehouse.js";
 
 export const equipmentCatalog = [
   {

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { designWalkable, mobileRobots, robotClearance } from "./design";
-import type { DesignModule, DesignPoint } from "./design";
-import type { WarehouseConfig } from "./warehouse";
+import { designWalkable, mobileRobots, robotClearance } from "./design.js";
+import type { DesignModule, DesignPoint } from "./design.js";
+import type { WarehouseConfig } from "./warehouse.js";
 
 export type RobotState = {
   id: string;

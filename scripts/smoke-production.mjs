@@ -17,6 +17,8 @@ const child = spawn(process.execPath, ["--import", "tsx", "server/index.ts"], {
   cwd: process.cwd(),
   env: {
     ...process.env,
+    DATABASE_URL: "",
+    VERCEL: "",
     NODE_ENV: "production",
     PUBLIC_ORIGIN: origin,
     DB_PATH: join(folder, "warehouse.db"),

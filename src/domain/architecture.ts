@@ -1,5 +1,5 @@
-import { localPoint } from "./design";
-import type { DesignFloor } from "./design";
+import { localPoint } from "./design.js";
+import type { DesignFloor } from "./design.js";
 
 /** Facade spans share the saved dock geometry; openings are not painted onto solid walls. */
 export function wallSections(floor: DesignFloor, edge: number, top = floor.height) {

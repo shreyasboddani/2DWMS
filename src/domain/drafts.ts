@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { configSchema } from "./warehouse";
-import { designSchema, floorSchema, moduleSchema } from "./design";
+import { configSchema } from "./warehouse.js";
+import { designSchema, floorSchema, moduleSchema } from "./design.js";
 const draftDesign = designSchema.extend({
   floors: z
     .array(

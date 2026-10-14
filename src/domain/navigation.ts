@@ -1,6 +1,6 @@
-import type { Location, Layout, WarehouseConfig } from "./warehouse";
-import { facilityFixtures } from "./facility";
-import { designWalkable } from "./design";
+import type { Location, Layout, WarehouseConfig } from "./warehouse.js";
+import { facilityFixtures } from "./facility.js";
+import { designWalkable } from "./design.js";
 export type Point2 = { x: number; z: number };
 const workLocations = new WeakMap<Layout, Location[]>();
 function workFor(layout: Layout) {

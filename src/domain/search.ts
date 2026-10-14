@@ -1,4 +1,4 @@
-import type { Layout, OperationalRecord } from "./warehouse";
+import type { Layout, OperationalRecord } from "./warehouse.js";
 
 export function searchRecords(records: OperationalRecord[], query: string,
   filters: { kind?: string; status?: string } = {}) {

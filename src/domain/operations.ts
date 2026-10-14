@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { generateLayout } from "./warehouse";
-import type { OperationalRecord, Warehouse } from "./warehouse";
+import { generateLayout } from "./warehouse.js";
+import type { OperationalRecord, Warehouse } from "./warehouse.js";
 export const operationSchema = z.object({
   type: z.enum([
     "arrive",

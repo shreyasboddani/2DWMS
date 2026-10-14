@@ -1,5 +1,5 @@
-import type { Location, WarehouseConfig } from "./warehouse";
-import type { Layout } from "./warehouse";
+import type { Location, WarehouseConfig } from "./warehouse.js";
+import type { Layout } from "./warehouse.js";
 export function facilityFixtures(config: WarehouseConfig, layout: Layout) {
   const [sx, sz] = layout.centers.staging,
     [px, pz] = layout.centers.packing;

@@ -76,3 +76,9 @@ Current local verification: typecheck, lint and production build passed; the tes
 Typecheck, lint and production build passed. The current suite has 53 passing tests and one PostgreSQL integration test skipped without a configured database. New coverage checks 500-aisle structural previews and cache invalidation, shared geometry and instance selection across 5,000 parts, concave roof/dock architecture, photo CSV/search behavior, and authenticated photo upload/read/deduplication with workspace isolation.
 
 The shared-geometry test measures vertex/matrix allocation savings for repeated parts; it does not establish a whole-application RAM percentage or client frame-rate guarantee. No browser surfaces were available in this session, so these visuals still require browser/device QA. The production build retains its large-chunk advisory. Live Neon/Vercel verification and earlier identity/role/client-launch gates remain open. Restart `npm run dev` once to initialize the image table and load new API routes; the existing API process does not watch source changes.
+
+## Deployment recheck — 2026-10-14
+
+Fetched origin/main; no incoming commits were present beyond e0912ef. Neon/PostgreSQL storage and Vercel API/SPA routing are already implemented. The production smoke process now clears inherited DATABASE_URL and VERCEL variables explicitly so its temporary SQLite test cannot connect to a developer/customer database.
+
+Local typecheck, lint, tests, build and production smoke were rerun. No Neon project credentials or Vercel project connection were available, so live database provisioning, deployment and staging persistence verification remain pending. Browser cookies hold the session token; warehouse/account/photo persistence requires the managed database. Browser-only persistence would be a separate single-device product mode, not a substitute for the existing SaaS storage.

@@ -48,3 +48,9 @@ Local tests exercise SQLite persistence and function configuration guards. CI ad
 - [Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js)
 - [Vercel routing configuration](https://vercel.com/docs/project-configuration/vercel-json)
 - [Why file SQLite is unsuitable on Vercel](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel)
+
+## Live deployment setup — 2026-10-14
+
+Created separate Neon project CSCS Warehouse Twin (shy-lab-56537600) with its production branch, and Vercel project cscs-3-d-wharehouse. The configured production URL is https://cscs-3-d-wharehouse.vercel.app. DATABASE_URL is stored only in Vercel's Production environment; previews intentionally have no production database credentials. PUBLIC_ORIGIN matches the production URL.
+
+The first live invocation exposed an ESM packaging error: Vercel compiled the API entry to JavaScript while its imports still referenced TypeScript source paths. Runtime imports now use explicit .js specifiers and the root TypeScript configuration declares ESM compilation. Local emitted API/domain modules were imported directly with Node without tsx to verify runtime resolution. Redeployment and live health verification follow this fix.

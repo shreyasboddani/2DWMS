@@ -3,8 +3,8 @@ import {
   validateRecord,
   generateLayout,
   validateRecordSet,
-} from "./warehouse";
-import type { OperationalRecord, WarehouseConfig } from "./warehouse";
+} from "./warehouse.js";
+import type { OperationalRecord, WarehouseConfig } from "./warehouse.js";
 export const csvColumns = [
   "id",
   "kind",
