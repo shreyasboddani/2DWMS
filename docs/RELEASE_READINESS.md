@@ -82,3 +82,9 @@ The shared-geometry test measures vertex/matrix allocation savings for repeated 
 Fetched origin/main; no incoming commits were present beyond e0912ef. Neon/PostgreSQL storage and Vercel API/SPA routing are already implemented. The production smoke process now clears inherited DATABASE_URL and VERCEL variables explicitly so its temporary SQLite test cannot connect to a developer/customer database.
 
 Local typecheck, lint, tests, build and production smoke were rerun. No Neon project credentials or Vercel project connection were available, so live database provisioning, deployment and staging persistence verification remain pending. Browser cookies hold the session token; warehouse/account/photo persistence requires the managed database. Browser-only persistence would be a separate single-device product mode, not a substitute for the existing SaaS storage.
+
+### Live verification completed — 2026-10-14
+
+The corrected production deployment at https://cscs-3-d-wharehouse.vercel.app returned HTTP 200 and {"ok":true} from /api/v1/health; /auth also returned HTTP 200. An isolated synthetic QA workspace passed registration, Secure/HttpOnly/SameSite=Lax cookie checks, empty warehouse creation and reload, logout, login and saved warehouse reload against the live Neon-backed API. The QA workspace remains isolated from user data. A wrapped UI connection string was replaced with the complete pooled URL before these checks. No credentials are committed. Preview deployments intentionally still need their own separate database settings.
+
+These checks establish deployment and database connectivity, not completion of the remaining password-recovery, email-verification, team-role, accessibility/device and client-launch requirements.
