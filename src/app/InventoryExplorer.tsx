@@ -128,7 +128,7 @@ export function InventoryExplorer({ records, onInspect, onEdit, onAdd }: {
         <div className="inventory-card-content"><span className={"status " + (r.status === "On hold" ? "warning" : "")}>{r.status}</span>
           <h3>{r.label}</h3><p>{r.sku || r.id}{r.batch ? " · " + r.batch : ""}</p>
           <div className="inventory-card-meta"><strong>{r.quantity.toLocaleString()} <small>{r.unit || "units"}</small></strong><code>{r.locationId}</code></div>
-          <div className="inventory-card-actions"><button className="button secondary small" onClick={() => onInspect(r)}>Locate in 3D <Icon name="arrow" /></button>
+          <div className="inventory-card-actions"><button className="button secondary small" onClick={() => onInspect(r)}>Locate position <Icon name="arrow" /></button>
             {onEdit && <button className="text-button" onClick={() => onEdit(r)}>Edit</button>}</div>
         </div>
       </article>)}

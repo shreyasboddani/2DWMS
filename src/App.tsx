@@ -52,7 +52,7 @@ import type {
 } from "./domain/warehouse";
 import type { ViewMode } from "./scene/WarehouseScene";
 import { DesignEditor } from "./app/DesignEditor";
-import { FloorPlan, LayoutPlacement } from "./app/FloorPlan";
+import { FloorPlan, LayoutPlacement, Warehouse2D } from "./app/FloorPlan";
 import {
   CsvImport,
   LocationMappings,
@@ -1582,6 +1582,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
   } | null>(null);
   const modelExporter = useRef<(() => Promise<Blob>) | null>(null);
   const [expanded, setExpanded] = useState(false),
+    [twoD, setTwoD] = useState(true),
     [exporting, setExporting] = useState(false);
   const { id } = useParams(),
     [warehouse, setWarehouse] = useState<Warehouse | null>(() => {
@@ -1824,6 +1825,10 @@ function Twin({ preview = false }: { preview?: boolean }) {
         >
           <div className="viewport-controls">
             <div className="segmented">
+              <button className={twoD ? "active" : ""} onClick={() => setTwoD(true)}>2D navigation</button>
+              <button className={!twoD ? "active" : ""} onClick={() => setTwoD(false)}>3D model</button>
+            </div>
+            {!twoD && <div className="segmented">
               {(["orbit", "plan", "walk"] as ViewMode[]).map((m) => (
                 <button
                   key={m}
@@ -1837,7 +1842,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
                       : "Walk"}
                 </button>
               ))}
-            </div>
+            </div>}
             <div className="viewport-tools">
               <button
                 className="view-tool"
@@ -1857,7 +1862,12 @@ function Twin({ preview = false }: { preview?: boolean }) {
               </span>
             </div>
           </div>
-          <SceneView
+          {twoD ? <Warehouse2D
+            config={warehouse.config}
+            records={warehouse.records}
+            selected={selected}
+            onSelect={setSelected}
+          /> : <SceneView
             config={warehouse.config}
             automation={warehouse.automation}
             records={warehouse.records}
@@ -1869,7 +1879,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
             onModelReady={(exporter) => {
               modelExporter.current = exporter;
             }}
-          />
+          />}
           {tour && (
             <div className="tour-card">
               <span className="eyebrow">
@@ -1918,13 +1928,13 @@ function Twin({ preview = false }: { preview?: boolean }) {
           )}
           <div className="viewport-footer">
             <span>
-              {mode === "walk"
+              {twoD ? "Select an aisle, then a bay and position to inspect inventory" : mode === "walk"
                 ? "WASD / arrow keys to move · Drag to look · Switch view to select a bin"
                 : mode === "plan"
                   ? "Drag to pan · Scroll to zoom · Click a location to inspect"
                   : "Drag to orbit · Scroll to zoom · Click a location to inspect"}
             </span>
-            <span>{selected || "WAREHOUSE OVERVIEW"}</span>
+            <span>{twoD ? (selected || "WAREHOUSE OVERVIEW") : (selected || "WAREHOUSE OVERVIEW")}</span>
           </div>
         </section>
         <aside className="inspector">
@@ -2129,7 +2139,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
         <a href="#warehouse-activity">Recent activity</a>
       </nav>
       <InventoryExplorer records={warehouse.records}
-        onInspect={(r) => { setSelected(r.locationId); setZone("all"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onInspect={(r) => { setTwoD(true); setSelected(r.locationId); setZone("all"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
         onEdit={preview ? undefined : (r) => { const location = locationById.get(r.locationId); if (location) setEditor({ location, record: r }); }}
         onAdd={preview ? undefined : () => { const location = layout.locations.find((l) => l.zone === "storage"); if (location) setEditor({ location }); }}
       />

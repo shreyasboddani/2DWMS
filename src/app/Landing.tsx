@@ -1,12 +1,9 @@
-import { formatFeet } from "../domain/units";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand, Icon } from "./ui";
 import { useSession } from "./service";
 import { exampleWarehouse, generateLayout, zones } from "../domain/warehouse";
-import { FloorPlan } from "./FloorPlan";
-import type { ViewMode } from "../scene/WarehouseScene";
-const Scene = lazy(() => import("../scene/WarehouseScene"));
+import { Warehouse2D } from "./FloorPlan";
 const stories = [
   [
     "Meet the arrival.",
@@ -34,7 +31,6 @@ export function Landing() {
   const sample = useMemo(() => exampleWarehouse(), []);
   const layout = useMemo(() => generateLayout(sample.config), [sample]);
   const [stage, setStage] = useState(-1);
-  const [mode, setMode] = useState<ViewMode>("orbit");
   const [selected, setSelected] = useState<string>();
   const destination = user ? "/app" : "/auth?mode=register";
   const location = layout.locations.find((l) => l.id === selected);
@@ -66,7 +62,7 @@ export function Landing() {
             <span>Inside and out.</span>
           </h1>
           <p>
-            Turn your floor into an interactive 3D workspace.
+            Turn your floor into an interactive 2D workspace.
             <br className="launch-desktop-break" /> Design the layout. Bring in
             the records. Get closer to every operation.
           </p>
@@ -91,47 +87,15 @@ export function Landing() {
             <span>
               <i className="dot" /> WAREHOUSE EXPLORER
             </span>
-            <span>ILLUSTRATIVE DATA · INTERACTIVE 3D</span>
+            <span>ILLUSTRATIVE DATA · INTERACTIVE 2D</span>
           </div>
           <div className="launch-scene">
-            <Suspense
-              fallback={
-                <FloorPlan config={sample.config} records={sample.records} />
-              }
-            >
-              <Scene
-                config={sample.config}
-                records={sample.records}
-                focus={stage < 0 ? undefined : zones[stage].id}
-                mode={mode}
-                selected={selected}
-                onSelect={setSelected}
-                onModeChange={setMode}
-              />
-            </Suspense>
-            <div className="launch-scene-note">
-              <span>01 / EXAMPLE FACILITY</span>
-              <strong>
-                {formatFeet(sample.config.width)} ×{" "}
-                {formatFeet(sample.config.depth)} ft
-              </strong>
-              <small>Drag to orbit · Click to inspect</small>
-            </div>
-            <div className="launch-view-switch" aria-label="Camera view">
-              {(["orbit", "plan", "walk"] as const).map((v) => (
-                <button
-                  key={v}
-                  aria-pressed={mode === v}
-                  onClick={() => setMode(v)}
-                >
-                  {v === "orbit"
-                    ? "3D overview"
-                    : v === "plan"
-                      ? "Floor plan"
-                      : "Walk inside"}
-                </button>
-              ))}
-            </div>
+            <Warehouse2D
+              config={sample.config}
+              records={sample.records}
+              selected={selected}
+              onSelect={setSelected}
+            />
           </div>
           <div
             className="launch-stage-tabs"
@@ -173,7 +137,7 @@ export function Landing() {
               {location
                 ? "This address connects a physical position to its operational records. Open the example workspace to inspect its details and explore the location directory."
                 : stage < 0
-                  ? "A connected view from receiving to dispatch. Choose an area below the model, change perspective, or select a location to get closer."
+                  ? "A connected view from receiving to dispatch. Select an aisle, open a bay, then click a rack position to inspect inventory."
                   : stories[stage][1]}
             </p>
             <Link to="/preview" className="launch-text-link">
@@ -194,7 +158,7 @@ export function Landing() {
             {[
               [
                 "Navigate naturally",
-                "Orbit the facility, read the floor plan, or walk through the aisles. Choose the perspective that fits your task.",
+                "Start with the 2D floor plan, open an aisle, and drill down to each bay and inventory position.",
                 "grid",
               ],
               [
@@ -324,7 +288,7 @@ export function Landing() {
             {[
               ["Map", "Choose a template and configure your facility."],
               ["Populate", "Add your records or import a CSV file."],
-              ["Explore", "Navigate the model and inspect each location."],
+              ["Explore", "Navigate the 2D layout and inspect each location."],
             ].map(([title, body], i) => (
               <article key={title}>
                 <span>0{i + 1}</span>
@@ -351,8 +315,8 @@ export function Landing() {
                 "This is CSCS Warehouse Twin, a spatial warehouse application. It does not reproduce or claim to be the production SCOTI interface. Direct integration is pending approved API details.",
               ],
               [
-                "Do I need a device that supports 3D?",
-                "3D is a progressive enhancement. A floor plan and location directory provide an alternative when WebGL is unavailable.",
+                "Does the warehouse view require 3D?",
+                "No. The primary warehouse view is a flat 2D layout with aisle, bay, and position navigation. The existing 3D model is available separately in the full explorer.",
               ],
             ].map(([title, body]) => (
               <details key={title}>
