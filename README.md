@@ -11,6 +11,8 @@ npm ci
 npm run dev
 ```
 
+If startup reports `ERR_MODULE_NOT_FOUND` for `tsx` or Vite, run `npm ci` again from this repository root (the directory containing `package.json` and `package-lock.json`), then retry `npm run dev`. Packages in `node_modules` are local install files and are not committed.
+
 Open http://localhost:5173. The command also starts the API on port 4310. Register a local workspace and create a warehouse. Data persists in var/warehouse.db; keep that directory when restarting. Examples are explicitly labeled and never replace existing records.
 
 ```sh
