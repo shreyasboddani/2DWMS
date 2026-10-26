@@ -2,6 +2,12 @@
 
 React 2D warehouse builder and operations workspace with measured floor plans, horizontal aisle navigation, rack elevations, and interactive work areas. This SaaS product is under development. It is an original interface; no live SCOTI connection is implemented. Manual records, CSV imports and external location mappings are available.
 
+## Live application
+
+Production: https://cscs-2dwms.vercel.app
+
+Register or sign in at https://cscs-2dwms.vercel.app/auth. Accounts and warehouse data persist in the dedicated CSCS 2DWMS Neon project. This database is separate from local development and the 3D app.
+
 ## Run locally
 
 Requires Node.js 24+ for the SQLite backend.
