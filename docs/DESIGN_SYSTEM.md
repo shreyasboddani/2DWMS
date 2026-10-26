@@ -37,3 +37,12 @@ Preserve realistic geometry while simplifying controls. Shared truck, forklift a
 Use spatially grouped instancing rather than expanded duplicate vertex buffers. Preserve per-instance selection and floor/shell visibility. Stock hit targets remain available without drawing empty proxies. Render only when camera, user interaction or playback requires a new frame. Automatic, Studio lighting and Lower GPU usage settings control rendering cost without deleting warehouse geometry or addresses.
 
 Inventory uses a white/blue searchable card workspace with actual product photos, explicit status, quantity/unit, address, edit and Locate in 3D controls. Paginate cards and show bounded location suggestions instead of inserting every bin into a native dropdown. Broken or missing images have a clear placeholder. Upload progress and failures remain visible; saving is disabled while an upload is pending.
+
+
+## Current 2D visual direction - 2026-10-26
+
+The client uses SVG/HTML for warehouse views and design walkthroughs. Scene-related sections above describe legacy sources that are no longer imported by the app. Use white/cool-blue surfaces, navy hierarchy, teal occupancy, amber holds and warm rack beams. No external font or graphic dependency is required.
+
+Four metric cards, address/SKU/item search, aisle/bay directory, breadcrumbs, Back/Forward history, floor tabs and a measured overview form the operations workspace. The aisle schematic orders bays horizontally left to right. Rack elevations expose every face/level/position. Docks, workstations and equipment are selectable. Location panels show photos, separate record quantities, manifest/schedule/destination fields and existing allowed operations. Expected/dispatched trucks are not drawn at doors. Robots and routes show planned/local-simulation state.
+
+Support pan/zoom/fit, keyboard-operable map targets, directory alternatives, responsive inspector stacking and reduced motion. See 2D_WMS_COVERAGE.md for feature coverage and verification limits.

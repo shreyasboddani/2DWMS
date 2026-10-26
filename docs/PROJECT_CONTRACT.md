@@ -49,3 +49,10 @@ Template and custom scenes share detailed procedural industrial assets: tractor/
 Static parts are instanced by shared geometry/material and spatial tile, retaining per-instance location IDs. Empty bins remain selectable without drawing wireframe stock. Layout derivations are cached by configuration and signature; structural builder previews omit storage-address allocation while operational layouts preserve every address. Automatic graphics settings reduce shadows and post-processing for large facilities without removing aisles or locations. Idle views stop submitting frames until interaction or animation requires them.
 
 The inventory explorer supports photos, multi-word search, status/type filters, pagination and exact-location focus. Photo uploads use authenticated, workspace-scoped database storage rather than embedding images in warehouse JSON. SCOTI connectivity remains pending its supported API documentation.
+
+
+## Standalone 2D app - 2026-10-26
+
+Warehouse exploration, template previews and custom-design walkthroughs now use 2D SVG/HTML. The application does not import a WebGL renderer. Legacy scene modules remain in source for historical tests; the separate 3D product is independent. Spatial indexing and occupancy/hold derivation live in src/domain/warehouseMap.ts. The map renders canonical locations and records and invokes existing guarded operation dialogs. No quantities, IDs or lifecycles were changed for presentation. This supersedes earlier requirements to expose orbit/walk/3D export controls in this app.
+
+The overview preserves the physical layout; aisle schematics deliberately lay bays left to right. Bay elevations expose faces and exact levels/bins. Floors remain independent when aisle numbers repeat. Navigation history does not mutate saved data. See 2D_WMS_COVERAGE.md for implemented features and remaining enterprise WMS requirements.

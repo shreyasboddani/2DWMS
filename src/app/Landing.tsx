@@ -316,7 +316,7 @@ export function Landing() {
               ],
               [
                 "Does the warehouse view require 3D?",
-                "No. The primary warehouse view is a flat 2D layout with aisle, bay, and position navigation. The existing 3D model is available separately in the full explorer.",
+                "No. The primary warehouse view is a flat 2D layout with aisle, bay, and position navigation. All navigation and operational controls in this app work in 2D.",
               ],
             ].map(([title, body]) => (
               <details key={title}>

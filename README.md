@@ -1,6 +1,6 @@
 # CSCS Warehouse Twin
 
-React warehouse builder and operations workspace with an interactive procedural Three.js facility. This SaaS product is under development. It is an original interface; no live SCOTI connection is implemented. Manual records, CSV imports and external location mappings are available.
+React 2D warehouse builder and operations workspace with measured floor plans, horizontal aisle navigation, rack elevations, and interactive work areas. This SaaS product is under development. It is an original interface; no live SCOTI connection is implemented. Manual records, CSV imports and external location mappings are available.
 
 ## Run locally
 
@@ -30,7 +30,7 @@ After building, npm start serves the app and API at http://localhost:4310. For H
 - Accounts, isolated workspaces, persistent warehouse CRUD, optimistic versions and activity history.
 - Through/U/L templates, stable aisle/bay/level/bin addresses, dock and workstation counts, quality/returns areas, finish and height options, yard sizing, and zone offsets with boundary/overlap validation.
 - Detailed racks/cartons/pallets, docked trucks, packing/scanning equipment, complete architecture, cutaway/exterior views, roof/trusses/lights, yard markings and service fixtures.
-- Orbit/top/walk modes, smooth area navigation, exact bin selection, inspector, fullscreen views and GLB export. SVG dashboard thumbnails and WebGL fallback.
+- Measured top-down maps, horizontal aisle views, rack elevations, exact position inspection, Back/Forward navigation, search, floor switching and expanded views. SVG dashboard thumbnails; no 3D renderer is loaded by the app.
 - Manual records/cargo manifests; validated CSV preview and atomic import; alias mapping; CSV/layout exports.
 - Guarded arrival, whole-manifest receiving with inbound departure, putaway, transfer, pick, pack, load, partial/full unload, counted adjustments, dispatch, hold/release. Quantity conservation and SKU/batch retention.
 
@@ -47,14 +47,14 @@ Before customer launch, complete identity recovery/verification, workspace roles
 - src/domain: schemas, deterministic layout/operations, CSV validation, navigation and exterior dock placement.
 - server/index.ts: authorized API, SQLite, sessions, guarded writes and activity.
 - src/app: session/API service, workflow dialogs, SVG floor plans.
-- src/scene: optional lazy renderer/controller and procedural facility models.
+- src/scene: retained legacy renderer sources, not imported by the 2D app.
 - src/App.tsx: routes, dashboard, builder, inspection/directory, accounts.
 
 Read docs/PROJECT_CONTRACT.md, docs/DATA_MODEL.md and docs/DESIGN_SYSTEM.md before changes. Shared saved state is the source of truth; 3D never mutates business state independently.
 
 ## Release hardening and deployment
 
-Location quantity limits, operational summaries/exception links, manifest ownership protection, cycle counts, complete directory pagination, recoverable warehouse archive/restore and backup/restore CLI are implemented. Docker/Compose packaging is provided. Read docs/DEPLOYMENT.md for runtime and recovery instructions and docs/RELEASE_READINESS.md for the exact release gates. The product is not yet certified ready for unrestricted client launch.
+Location quantity limits, operational summaries/exception links, manifest ownership protection, cycle counts, complete directory pagination, recoverable warehouse archive/restore and backup/restore CLI are implemented. Docker/Compose packaging is provided. Read docs/DEPLOYMENT.md for runtime and recovery instructions and docs/RELEASE_READINESS.md for the exact release gates. The product is not yet certified ready for unrestricted client launch. See [the 2D WMS coverage review](docs/2D_WMS_COVERAGE.md) for implemented interactions and remaining advanced WMS work.
 
 ## Vercel and Neon
 

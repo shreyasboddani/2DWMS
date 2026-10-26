@@ -88,3 +88,10 @@ Local typecheck, lint, tests, build and production smoke were rerun. No Neon pro
 The corrected production deployment at https://cscs-3-d-wharehouse.vercel.app returned HTTP 200 and {"ok":true} from /api/v1/health; /auth also returned HTTP 200. An isolated synthetic QA workspace passed registration, Secure/HttpOnly/SameSite=Lax cookie checks, empty warehouse creation and reload, logout, login and saved warehouse reload against the live Neon-backed API. The QA workspace remains isolated from user data. A wrapped UI connection string was replaced with the complete pooled URL before these checks. No credentials are committed. Preview deployments intentionally still need their own separate database settings.
 
 These checks establish deployment and database connectivity, not completion of the remaining password-recovery, email-verification, team-role, accessibility/device and client-launch requirements.
+
+
+## Standalone 2D operations workspace - 2026-10-26
+
+Warehouse and design walkthrough UI now use SVG/HTML with no scene imports. Horizontal aisle schematics, bay elevations, map history, floor navigation, address/item search, occupancy/hold layers and selectable docks/workstations/equipment are implemented. Location panels invoke existing guarded operations and show manifests, schedules, photos and exact record quantities. Landing, design editor and automation UI load separately.
+
+Typecheck and lint passed. The suite has 56 passing tests and one PostgreSQL integration test skipped because no test database is configured. New map coverage checks floor-specific aisle grouping, canonical status classification, docked truck indexing and complete 250-aisle indexing. Production build passed. Browser computer-use inspection ended because the tool could not verify the current Chrome URL; this pass does not claim completed visual/device QA. See 2D_WMS_COVERAGE.md for implemented operations and outstanding advanced WMS capabilities.

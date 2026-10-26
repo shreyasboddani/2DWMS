@@ -3,9 +3,7 @@ import { searchRecords } from "./domain/search";
 import { NumberInput } from "./app/NumberInput";
 import { squareFeet, feet, meters, formatFeet } from "./domain/units";
 import { DraftList } from "./app/DraftList";
-import { AutomationPanel } from "./app/AutomationPanel";
 import type { DesignDraft, DraftInput } from "./domain/drafts";
-import { Landing } from "./app/Landing";
 import { Brand, Icon } from "./app/ui";
 import {
   lazy,
@@ -50,8 +48,6 @@ import type {
   Location,
   Zone,
 } from "./domain/warehouse";
-import type { ViewMode } from "./scene/WarehouseScene";
-import { DesignEditor } from "./app/DesignEditor";
 import { FloorPlan, LayoutPlacement, Warehouse2D } from "./app/FloorPlan";
 import {
   CsvImport,
@@ -66,19 +62,22 @@ import { exportCsv } from "./domain/csv";
 import { availableOperations } from "./domain/operations";
 import type { Operation } from "./domain/operations";
 import { operationalSummary } from "./domain/summary";
-const Scene = lazy(() => import("./scene/WarehouseScene"));
+const AutomationModule = lazy(() => import("./app/AutomationPanel").then(module => ({ default: module.AutomationPanel })));
+function AutomationPanel(props: React.ComponentProps<typeof import("./app/AutomationPanel").AutomationPanel>) {
+  return <Suspense fallback={<p className="subtle">Loading automation controls...</p>}><AutomationModule {...props} /></Suspense>;
+}
+const LandingModule = lazy(() => import("./app/Landing").then(module => ({ default: module.Landing })));
+function Landing() {
+  return <Suspense fallback={<div className="full-loading">Opening Warehouse Twin...</div>}><LandingModule /></Suspense>;
+}
+const DesignEditorModule = lazy(() => import("./app/DesignEditor").then(module => ({ default: module.DesignEditor })));
+function DesignEditor(props: React.ComponentProps<typeof import("./app/DesignEditor").DesignEditor>) {
+  return <Suspense fallback={<div className="full-loading">Opening design studio...</div>}><DesignEditorModule {...props} /></Suspense>;
+}
 const errorText = (e: unknown) =>
   e instanceof Error ? e.message : "Something went wrong.";
-function SceneView(props: React.ComponentProps<typeof Scene>) {
-  if (props.compact)
-    return <FloorPlan config={props.config} records={props.records} />;
-  return (
-    <Suspense
-      fallback={<div className="loading-scene">Preparing your warehouse…</div>}
-    >
-      <Scene {...props} />
-    </Suspense>
-  );
+function SceneView(props: { config: WarehouseConfig; records?: OperationalRecord[]; compact?: boolean; onSelect?: (id: string) => void }) {
+  return <FloorPlan config={props.config} records={props.records} onSelect={props.onSelect} />;
 }
 function Notice({ children }: { children: React.ReactNode }) {
   return (
@@ -534,7 +533,6 @@ function Builder() {
   const [designOpen, setDesignOpen] = useState(false);
   const [autoArrange, setAutoArrange] = useState(true);
   const [undoConfig, setUndoConfig] = useState<WarehouseConfig | null>(null);
-  const [builderMode, setBuilderMode] = useState<ViewMode>("orbit");
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const { id } = useParams(),
     navigate = useNavigate(),
@@ -746,9 +744,6 @@ function Builder() {
           <SceneView
             config={config}
             records={existing?.records || []}
-            designPreview
-            mode={builderMode}
-            onModeChange={setBuilderMode}
           />
         </div>
         {layout.errors.map((e) => (
@@ -1110,26 +1105,8 @@ function Builder() {
               {previewExpanded ? "Close preview" : "Expand preview ↗"}
             </button>
           </div>
-          <div className="builder-view-controls segmented">
-            {(["orbit", "plan", "walk"] as ViewMode[]).map((view) => (
-              <button
-                key={view}
-                className={builderMode === view ? "active" : ""}
-                onClick={() => setBuilderMode(view)}
-              >
-                {view === "orbit"
-                  ? "3D layout"
-                  : view === "plan"
-                    ? "Floor plan"
-                    : "Walk inside"}
-              </button>
-            ))}
-          </div>
           <SceneView
             config={config}
-            designPreview
-            mode={builderMode}
-            onModeChange={setBuilderMode}
             onSelect={(id) => {
               const loc = layout.locations.find((l) => l.id === id);
               if (loc)
@@ -1141,15 +1118,6 @@ function Builder() {
                       : 0,
                 );
             }}
-            focus={
-              step === 0
-                ? undefined
-                : step === 1
-                  ? "storage"
-                  : step === 2
-                    ? "packing"
-                    : undefined
-            }
           />
           <div className="preview-stats">
             <div>
@@ -1580,10 +1548,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
     record: OperationalRecord;
     type: Operation["type"];
   } | null>(null);
-  const modelExporter = useRef<(() => Promise<Blob>) | null>(null);
-  const [expanded, setExpanded] = useState(false),
-    [twoD, setTwoD] = useState(true),
-    [exporting, setExporting] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { id } = useParams(),
     [warehouse, setWarehouse] = useState<Warehouse | null>(() => {
       if (!preview) return null;
@@ -1600,7 +1565,6 @@ function Twin({ preview = false }: { preview?: boolean }) {
     [error, setError] = useState("");
   const [zone, setZone] = useState<Zone | "all">("all"),
     [selected, setSelected] = useState(""),
-    [mode, setMode] = useState<ViewMode>("orbit"),
     [query, setQuery] = useState(""),
     [editor, setEditor] = useState<{
       location: Location;
@@ -1824,25 +1788,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
           className={"viewport " + (expanded ? "viewport-expanded" : "")}
         >
           <div className="viewport-controls">
-            <div className="segmented">
-              <button className={twoD ? "active" : ""} onClick={() => setTwoD(true)}>2D navigation</button>
-              <button className={!twoD ? "active" : ""} onClick={() => setTwoD(false)}>3D model</button>
-            </div>
-            {!twoD && <div className="segmented">
-              {(["orbit", "plan", "walk"] as ViewMode[]).map((m) => (
-                <button
-                  key={m}
-                  className={mode === m ? "active" : ""}
-                  onClick={() => setMode(m)}
-                >
-                  {m === "orbit"
-                    ? "3D view"
-                    : m === "plan"
-                      ? "Top view"
-                      : "Walk"}
-                </button>
-              ))}
-            </div>}
+            <span className="map-mode-badge"><span />Warehouse operations / 2D</span>
             <div className="viewport-tools">
               <button
                 className="view-tool"
@@ -1862,24 +1808,20 @@ function Twin({ preview = false }: { preview?: boolean }) {
               </span>
             </div>
           </div>
-          {twoD ? <Warehouse2D
+          <Warehouse2D
             config={warehouse.config}
             records={warehouse.records}
             selected={selected}
-            onSelect={setSelected}
-          /> : <SceneView
-            config={warehouse.config}
-            automation={warehouse.automation}
-            records={warehouse.records}
-            selected={selected}
-            focus={zone === "all" ? undefined : zone}
-            mode={mode}
-            onSelect={setSelected}
-            onModeChange={setMode}
-            onModelReady={(exporter) => {
-              modelExporter.current = exporter;
+            onSelect={(id) => {
+              setSelected(id);
+              if (zone !== 'all' && layout.locations.find(l => l.id === id)?.zone !== zone) setZone('all');
             }}
-          />}
+            focus={zone}
+            automation={warehouse.automation}
+            onOperation={preview ? undefined : (record, type) => setOperation({ record, type })}
+            onAddRecord={preview ? undefined : (location) => setEditor({ location })}
+            onEditRecord={preview ? undefined : (location, record) => setEditor({ location, record })}
+          />
           {tour && (
             <div className="tour-card">
               <span className="eyebrow">
@@ -1928,13 +1870,9 @@ function Twin({ preview = false }: { preview?: boolean }) {
           )}
           <div className="viewport-footer">
             <span>
-              {twoD ? "Select an aisle, then a bay and position to inspect inventory" : mode === "walk"
-                ? "WASD / arrow keys to move · Drag to look · Switch view to select a bin"
-                : mode === "plan"
-                  ? "Drag to pan · Scroll to zoom · Click a location to inspect"
-                  : "Drag to orbit · Scroll to zoom · Click a location to inspect"}
+              Select an aisle, bay or work area. Choose a position to inspect records and actions.
             </span>
-            <span>{twoD ? (selected || "WAREHOUSE OVERVIEW") : (selected || "WAREHOUSE OVERVIEW")}</span>
+            <span>{selected || "WAREHOUSE OVERVIEW"}</span>
           </div>
         </section>
         <aside className="inspector">
@@ -2139,7 +2077,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
         <a href="#warehouse-activity">Recent activity</a>
       </nav>
       <InventoryExplorer records={warehouse.records}
-        onInspect={(r) => { setTwoD(true); setSelected(r.locationId); setZone("all"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onInspect={(r) => { setSelected(r.locationId); setZone("all"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
         onEdit={preview ? undefined : (r) => { const location = locationById.get(r.locationId); if (location) setEditor({ location, record: r }); }}
         onAdd={preview ? undefined : () => { const location = layout.locations.find((l) => l.zone === "storage"); if (location) setEditor({ location }); }}
       />
@@ -2294,32 +2232,6 @@ function Twin({ preview = false }: { preview?: boolean }) {
           </nav>
         )}
         <div className="directory-footer">
-          <button
-            className="text-button"
-            disabled={exporting}
-            onClick={async () => {
-              if (!modelExporter.current) {
-                setError("The 3D model is not available yet.");
-                return;
-              }
-              setExporting(true);
-              try {
-                const blob = await modelExporter.current();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = warehouse.config.name + ".glb";
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-              } catch (e) {
-                setError(errorText(e));
-              } finally {
-                setExporting(false);
-              }
-            }}
-          >
-            {exporting ? "Preparing model…" : "Export 3D model (.glb) ↓"}
-          </button>
           <span>
             {tab === "locations"
               ? visibleLocations.length

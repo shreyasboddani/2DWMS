@@ -2,9 +2,8 @@ import { squareFeet, feet, meters, formatFeet } from "../domain/units";
 import { NumberInput } from "./NumberInput";
 import type { DraftInput } from "../domain/drafts";
 import { useNavigate } from "react-router-dom";
-import { lazy, Suspense, useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import type { PointerEvent, DragEvent } from "react";
-import type { ViewMode } from "../scene/createWarehouseScene";
 import {
   configSchema,
   generateLayout,
@@ -38,7 +37,7 @@ import type {
   EquipmentKind,
 } from "../domain/design";
 import { Icon } from "./ui";
-const Scene = lazy(() => import("../scene/WarehouseScene"));
+import { Warehouse2D } from "./Warehouse2D";
 type Tool = "select" | "outline" | "area" | "route";
 type Gesture =
   | { kind: "move"; start: DesignPoint; original: Design; ids: string[] }
@@ -92,7 +91,6 @@ export function DesignEditor({
     [message, setMessage] = useState("");
   const [followResize, setFollowResize] = useState(true);
   const [previewExpanded, setPreviewExpanded] = useState(false);
-  const [previewMode, setPreviewMode] = useState<ViewMode>("orbit");
   const [siteWidth, setSiteWidth] = useState(config.width),
     [siteDepth, setSiteDepth] = useState(config.depth);
   const [name, setName] = useState(config.name),
@@ -563,7 +561,7 @@ export function DesignEditor({
           <h1>Build your floor. Your way.</h1>
           <p>
             Choose a building shape. Drag its corners. Add shelves and check it
-            in 3D.
+            in the 2D workspace.
           </p>
         </div>
         <div className="actions">
@@ -679,26 +677,9 @@ export function DesignEditor({
             2D editor
           </button>
           <button aria-pressed={preview} onClick={() => setPreview(true)}>
-            3D preview
+            2D walkthrough
           </button>
         </div>
-        {preview && (
-          <div className="segmented">
-            {(["orbit", "plan", "walk"] as ViewMode[]).map((view) => (
-              <button
-                key={view}
-                aria-pressed={previewMode === view}
-                onClick={() => setPreviewMode(view)}
-              >
-                {view === "plan"
-                  ? "Top view"
-                  : view === "walk"
-                    ? "Walk through"
-                    : "Orbit"}
-              </button>
-            ))}
-          </div>
-        )}
         {!preview && (
           <>
             <button
@@ -932,20 +913,6 @@ export function DesignEditor({
                 <button onClick={() => setPreviewExpanded(!previewExpanded)}>
                   {previewExpanded ? "Exit expanded preview" : "Expand preview"}
                 </button>
-                {previewExpanded &&
-                  (["orbit", "plan", "walk"] as ViewMode[]).map((v) => (
-                    <button
-                      key={v}
-                      aria-pressed={previewMode === v}
-                      onClick={() => setPreviewMode(v)}
-                    >
-                      {v === "plan"
-                        ? "Top view"
-                        : v === "walk"
-                          ? "Walk through"
-                          : "Orbit"}
-                    </button>
-                  ))}
               </div>
             )}
             <span>
@@ -959,20 +926,8 @@ export function DesignEditor({
           </div>
           {preview ? (
             <div className="design-preview">
-              <Suspense fallback={<p>Preparing the 3D design…</p>}>
-                <Scene
-                  config={currentConfig}
-                  records={records}
-                  designPreview
-                  initialFloorId={floor.id}
-                  mode={previewMode}
-                  onModeChange={setPreviewMode}
-                />
-              </Suspense>
-              <div className="design-preview-note">
-                Major layout changes are made in 2D. Orbit, inspect, or isolate
-                a floor here.
-              </div>
+              <Warehouse2D config={currentConfig} records={records} initialFloorId={floor.id} />
+              <div className="design-preview-note">Inspect the floor, aisles and positions. Return to the editor to move equipment or change the layout.</div>
             </div>
           ) : (
             <div className="design-canvas-scroll">
