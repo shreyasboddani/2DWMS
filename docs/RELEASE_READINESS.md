@@ -95,3 +95,8 @@ These checks establish deployment and database connectivity, not completion of t
 Warehouse and design walkthrough UI now use SVG/HTML with no scene imports. Horizontal aisle schematics, bay elevations, map history, floor navigation, address/item search, occupancy/hold layers and selectable docks/workstations/equipment are implemented. Location panels invoke existing guarded operations and show manifests, schedules, photos and exact record quantities. Landing, design editor and automation UI load separately.
 
 Typecheck and lint passed. The suite has 56 passing tests and one PostgreSQL integration test skipped because no test database is configured. New map coverage checks floor-specific aisle grouping, canonical status classification, docked truck indexing and complete 250-aisle indexing. Production build passed. Browser computer-use inspection ended because the tool could not verify the current Chrome URL; this pass does not claim completed visual/device QA. See 2D_WMS_COVERAGE.md for implemented operations and outstanding advanced WMS capabilities.
+
+
+## Studio grouping and station popups - 2026-10-26
+
+Typecheck and lint passed; 59 automated tests passed, with one local-PostgreSQL integration test skipped without its configured test database. Group tests cover schema persistence, stable addresses after movement, complete merge/ungroup, spacing and route preservation, and full-turn rotation. Visual station dialogs and studio shortcuts are implemented; these local checks do not constitute browser/device visual QA.

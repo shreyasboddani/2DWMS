@@ -8,6 +8,7 @@ import { moduleSize, equipmentCatalog } from '../domain/design';
 import type { AutomationState } from '../domain/automation';
 import { availableOperations } from '../domain/operations';
 import type { Operation } from '../domain/operations';
+import { StationPopup } from './StationPopup';
 import { ProductPhoto } from './InventoryExplorer';
 import { Icon } from './ui';
 import '../styles/warehouse-map.css';
@@ -20,6 +21,7 @@ type WarehouseMapProps = {
   config: WarehouseConfig; records?: OperationalRecord[]; selected?: string;
   onSelect?: (id: string) => void; focus?: Zone | 'all'; initialFloorId?: string;
   automation?: AutomationState;
+  onOpenStudio?: () => void;
   onOperation?: (record: OperationalRecord, type: Operation["type"]) => void;
   onAddRecord?: (location: Location) => void;
   onEditRecord?: (location: Location, record: OperationalRecord) => void;
@@ -29,7 +31,7 @@ export function Warehouse2D(props: WarehouseMapProps) {
   const selected = props.selected ?? localSelected;
   return <WarehouseMap {...props} selected={selected} onSelect={props.onSelect ?? setLocalSelected} />;
 }
-function WarehouseMap({ config, records = [], selected = '', onSelect, focus = 'all', initialFloorId, automation, onOperation, onAddRecord, onEditRecord }: WarehouseMapProps) {
+function WarehouseMap({ config, records = [], selected = '', onSelect, focus = 'all', initialFloorId, automation, onOperation, onAddRecord, onEditRecord, onOpenStudio }: WarehouseMapProps) {
   const layout = useMemo(() => generateLayout(config), [config]);
   const index = useMemo(() => indexWarehouseMap(layout, records), [layout, records]);
   const floors = config.design?.floors;
@@ -52,6 +54,8 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
   const { floorId, aisleKey, bay } = path;
   const navigate = (next: MapPath) => setHistory(h => samePath(h.paths[h.cursor], next) ? h : { ...h, paths: [...h.paths.slice(0, h.cursor + 1), next], cursor: h.cursor + 1 });
   const [equipmentId, setEquipmentId] = useState('');
+  const [stationId, setStationId] = useState('');
+  const popupLocation = layout.locations.find(l => l.id === stationId);
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [layer, setLayer] = useState<'occupancy' | 'holds'>('occupancy');
@@ -95,6 +99,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
   const chooseLocation = (id: string) => {
     const location = layout.locations.find(l => l.id === id);
     if (location) navigate({ floorId: location.floorId ?? '', aisleKey: location.aisle !== undefined ? `${location.floorId ?? ''}:${location.aisle}` : null, bay: location.aisle !== undefined ? location.bay ?? 1 : null });
+    if (location && location.zone !== 'storage') setStationId(id);
     onSelect?.(id); setQuery('');
   };
   const status = (l: Location) => index.held.has(l.id) ? 'held' : index.occupied.has(l.id) ? 'occupied' : 'empty';
@@ -108,7 +113,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
   return <section className="map-workspace" aria-label="2D warehouse navigation">
     <div className="map-masthead">
       <div className="map-masthead-title"><span className="map-app-icon"><Icon name="grid" /></span><div><span className="map-kicker">SPATIAL OPERATIONS</span><h2>{bay !== null && aisle ? `Aisle ${number(aisle.number)} / Bay ${number(bay)}` : aisle ? `Aisle ${number(aisle.number)}` : 'Your warehouse, mapped.'}</h2></div></div>
-      <span className="map-mode-badge"><span />2D workspace</span>
+      <div className="map-masthead-actions">{onOpenStudio && <button className="map-open-studio" onClick={onOpenStudio}><Icon name="grid" />Design studio<span>Group & arrange</span></button>}<span className="map-mode-badge"><span />2D workspace</span></div>
     </div>
     <div className="map-metrics">
       <div><span>STORAGE POSITIONS</span><strong>{visibleStock.length.toLocaleString()}</strong><small>{aisles.length} aisles on this floor</small></div>
@@ -117,7 +122,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
       <div><span>REQUIRES ATTENTION</span><strong className={visibleLocations.some(l => index.held.has(l.id)) ? 'map-amber' : ''}>{visibleLocations.filter(l => index.held.has(l.id)).length}</strong><small>Locations with held records</small></div>
     </div>
     <div className="map-toolbar">
-      <div className="map-history" aria-label="Map history"><button aria-label="Go back in warehouse navigation" disabled={history.cursor === 0} onClick={() => { setHistory(h => ({ ...h, cursor: Math.max(0, h.cursor - 1) })); resetCamera(); }}>?<span>Back</span></button><button aria-label="Go forward in warehouse navigation" disabled={history.cursor >= history.paths.length - 1} onClick={() => { setHistory(h => ({ ...h, cursor: Math.min(h.paths.length - 1, h.cursor + 1) })); resetCamera(); }}><span>Forward</span>?</button></div>
+      <div className="map-history" aria-label="Map history"><button aria-label="Go back in warehouse navigation" disabled={history.cursor === 0} onClick={() => { setHistory(h => ({ ...h, cursor: Math.max(0, h.cursor - 1) })); resetCamera(); }}>&#8592;<span>Back</span></button><button aria-label="Go forward in warehouse navigation" disabled={history.cursor >= history.paths.length - 1} onClick={() => { setHistory(h => ({ ...h, cursor: Math.min(h.paths.length - 1, h.cursor + 1) })); resetCamera(); }}><span>Forward</span>&#8594;</button></div>
       <nav className="map-breadcrumb" aria-label="Warehouse navigation"><button onClick={overview}><Icon name="grid" />Layout</button>{aisle && <><span>/</span><button onClick={() => { navigate({ floorId, aisleKey, bay: null }); resetCamera(); }}>Aisle {number(aisle.number)}</button></>}{bay !== null && <><span>/</span><strong>Bay {number(bay)}</strong></>}</nav>
       <div className="map-search-wrap"><label className="map-search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5" /><path d="m12 12 5 5" /></svg><input aria-label="Search warehouse addresses and inventory" placeholder="Find an address, SKU or item..." type="search" value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') setQuery(''); if (e.key === 'Enter' && results[0]) chooseLocation(results[0].id); }} /></label>
         {query.trim() && <div className="map-search-results">{results.length ? results.map(l => <button key={l.id} onClick={() => chooseLocation(l.id)}><code>{l.code}</code><span>{l.label}</span><small>{index.byLocation.get(l.id)?.length ?? 0} records</small></button>) : <p>No matching locations or items.</p>}<small>Up to 15 matches. Enter a complete address for an exact match.</small></div>}
@@ -140,12 +145,12 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
       <div className="map-main">
         <div className="map-canvas-heading"><div><span className="map-kicker">{bay !== null ? 'RACK ELEVATION' : aisle ? 'HORIZONTAL AISLE SCHEMATIC' : 'MEASURED FLOOR PLAN'}</span><strong>{bay !== null ? 'Every level. Every position.' : aisle ? 'Select a numbered bay' : focus === 'all' ? 'Facility overview' : zones.find(z => z.id === focus)?.name}</strong></div><div className="map-layer-switch" aria-label="Map color layer"><button className={layer === 'occupancy' ? 'active' : ''} onClick={() => setLayer('occupancy')}>Occupancy</button><button className={layer === 'holds' ? 'active' : ''} onClick={() => setLayer('holds')}>Holds</button></div></div>
         {bay === null && aisle ? <div className="map-aisle-explorer">
-          <div className="map-aisle-intro"><span className="map-orientation-badge">BAYS LEFT ? RIGHT</span><p>Both rack faces are shown below. Choose any bay to inspect its levels and positions.</p></div>
+          <div className="map-aisle-intro"><span className="map-orientation-badge">BAYS LEFT TO RIGHT</span><p>Both rack faces are shown below. Choose any bay to inspect its levels and positions.</p></div>
           <div className="map-horizontal-scroll" tabIndex={0} aria-label="Horizontal aisle rack schematic">
-            {['L', 'walkway', 'R'].map(side => side === 'walkway' ? <div className="map-walkway" key={side}><span>? AISLE {number(aisle.number)} ?</span><small>Travel aisle / schematic view</small></div> : <section className="map-horizontal-face" key={side}><h3>{side === 'L' ? 'LEFT RACK FACE' : 'RIGHT RACK FACE'}</h3><div className="map-horizontal-bays" style={{ gridTemplateColumns: `repeat(${aisle.bays.size}, minmax(128px, 1fr))` }}>{[...aisle.bays].sort(([a], [b]) => a - b).map(([n, locations]) => {
+            {['L', 'walkway', 'R'].map(side => side === 'walkway' ? <div className="map-walkway" key={side}><span>AISLE {number(aisle.number)} / TRAVEL LANE</span><small>Travel aisle / schematic view</small></div> : <section className="map-horizontal-face" key={side}><h3>{side === 'L' ? 'LEFT RACK FACE' : 'RIGHT RACK FACE'}</h3><div className="map-horizontal-bays" style={{ gridTemplateColumns: `repeat(${aisle.bays.size}, minmax(128px, 1fr))` }}>{[...aisle.bays].sort(([a], [b]) => a - b).map(([n, locations]) => {
               const cells = locations.filter(l => (l.side ?? 'L') === side), used = cells.filter(l => index.occupied.has(l.id)).length, holds = cells.some(l => index.held.has(l.id));
               const sampleLevels = [...new Set(cells.map(l => l.level ?? 1))].sort((a, b) => b - a).slice(0, 4);
-              return <button className={`map-horizontal-bay ${holds ? 'has-hold' : ''}`} key={n} onClick={() => openBay(n)} aria-label={`Open bay ${n}, ${side === 'L' ? 'left' : 'right'} rack`}><span className="map-bay-label">BAY <strong>{number(n)}</strong><span>?</span></span><span className="map-bay-shelf-art">{sampleLevels.map(level => <span className="map-bay-shelf" key={level}>{cells.filter(l => (l.level ?? 1) === level).slice(0, 8).map(l => <i key={l.id} className={status(l)} />)}</span>)}</span><span className="map-bay-occupancy">{used} / {cells.length} occupied</span><span className="map-bay-meter"><i style={{ width: `${cells.length ? used / cells.length * 100 : 0}%` }} /></span></button>;
+              return <button className={`map-horizontal-bay ${holds ? 'has-hold' : ''}`} key={n} onClick={() => openBay(n)} aria-label={`Open bay ${n}, ${side === 'L' ? 'left' : 'right'} rack`}><span className="map-bay-label">BAY <strong>{number(n)}</strong><span aria-hidden="true">&#8599;</span></span><span className="map-bay-shelf-art">{sampleLevels.map(level => <span className="map-bay-shelf" key={level}>{cells.filter(l => (l.level ?? 1) === level).slice(0, 8).map(l => <i key={l.id} className={status(l)} />)}</span>)}</span><span className="map-bay-occupancy">{used} / {cells.length} occupied</span><span className="map-bay-meter"><i style={{ width: `${cells.length ? used / cells.length * 100 : 0}%` }} /></span></button>;
             })}</div></section>)}
           </div><p className="map-aisle-footnote">Schematic orientation for easy reading. The facility overview preserves the actual rack placement and dimensions.</p>
         </div> : bay === null ? <div className="map-canvas">
@@ -168,7 +173,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
             {floor?.modules.filter(m => m.kind !== 'aisle').map(m => {
               const size = moduleSize(m), color = equipmentCatalog.find(e => e.id === m.kind)?.color ?? '#6a8aab';
               const robot = automation?.robots.find(r => r.id === m.id);
-              return <g key={m.id} data-map-target role="button" tabIndex={0} aria-label={`Inspect equipment ${m.label}`} className="map-equipment" onClick={() => setEquipmentId(m.id)} onKeyDown={e => selectKey(e, () => setEquipmentId(m.id))} transform={`translate(${robot?.x ?? m.x} ${robot?.z ?? m.z}) rotate(${robot ? robot.heading * 180 / Math.PI : m.rotation})`} opacity={focus === 'all' ? 1 : .6}>
+              return <g key={m.id} data-map-target role="button" tabIndex={0} aria-label={`Inspect equipment ${m.label}`} className="map-equipment" onClick={() => { const location = visibleLocations.find(l => l.moduleId === m.id); if (location) chooseLocation(location.id); else setEquipmentId(m.id); }} onKeyDown={e => selectKey(e, () => { const location = visibleLocations.find(l => l.moduleId === m.id); if (location) chooseLocation(location.id); else setEquipmentId(m.id); })} transform={`translate(${robot?.x ?? m.x} ${robot?.z ?? m.z}) rotate(${robot ? robot.heading * 180 / Math.PI : m.rotation})`} opacity={focus === 'all' ? 1 : .6}>
                 <rect x={-size.width / 2} y={-size.depth / 2} width={size.width} height={size.depth} rx=".15" fill={color} fillOpacity={m.kind === 'area' ? .06 : .22} stroke={equipmentId === m.id ? '#276dd0' : color} strokeWidth={equipmentId === m.id ? '.2' : '.07'} />
                 {['belt', 'roller', 'sorter'].includes(m.kind) && <path d={`M0 ${-size.depth * .35}v${size.depth * .7}m-.2-.3.2.3.2-.3`} stroke={color} strokeWidth=".08" fill="none" />}
                 {robot && <circle r=".16" fill={robot.status === 'Running' ? '#12a08b' : '#d5a74e'} />}
@@ -190,7 +195,8 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
               const truckX = dockModule?.x ?? pose.x, truckZ = dockModule?.z ?? pose.z;
               const truckAngle = dockModule?.rotation ?? -pose.rotation * 180 / Math.PI;
               return <g key={l.id} data-map-target role="button" tabIndex={0} aria-label={`Inspect ${l.code}`} className={`map-workpoint ${selected === l.id ? 'selected' : ''}`} onClick={() => chooseLocation(l.id)} onKeyDown={e => selectKey(e, () => chooseLocation(l.id))}>
-                <rect x={l.x - .7} y={l.z - .55} width="1.4" height="1.1" rx=".15" fill={index.held.has(l.id) ? '#dba049' : zones.find(z => z.id === l.zone)?.color} /><text x={l.x} y={l.z + 1.25} textAnchor="middle" fontSize={labelSize * .65} fill="#3e5874">{l.code}</text>
+                <rect x={l.x - 1.5} y={l.z - 1.2} width="3" height="2.4" fill="transparent" />
+                <rect x={l.x - .7} y={l.z - .55} width="1.4" height="1.1" rx=".15" fill={index.held.has(l.id) ? '#dba049' : zones.find(z => z.id === l.zone)?.color} /><text x={l.x} y={l.z + 1.25} textAnchor="middle" fontSize={labelSize * .65} fill="#3e5874">{l.code.match(/(?:IN|OUT|STG|PACK|QC|RET)-[0-9]+$/)?.[0] || l.code}</text>
                 {truck && <g transform={`translate(${truckX} ${truckZ}) rotate(${truckAngle})`}><g transform={`translate(0 ${dockModule ? -dockModule.depth / 2 : 0})`}><rect x="-.65" y="-3.7" width="1.3" height="3.7" rx=".12" fill="#e4edf6" stroke="#6d89a7" strokeWidth=".08" /><path d="M-.48-3.4v3.1M.48-3.4v3.1M-.6-.15H.6" stroke="#bdcddf" strokeWidth=".06" /><rect x="-.65" y="-4.7" width="1.3" height=".85" rx=".18" fill="#264b78" /><path d="M-.43-4.45h.86" stroke="#a4d1e6" strokeWidth=".22" /><path d="M-.75-4.3v.45M.75-4.3v.45M-.75-.8v.45M.75-.8v.45" stroke="#53667c" strokeWidth=".2" /></g></g>}
                 <title>{l.code}: {index.byLocation.get(l.id)?.map(r => `${r.label} (${r.status})`).join(', ') || 'No records assigned'}</title>
               </g>;
@@ -200,7 +206,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
           <div className="map-zoom"><button aria-label="Zoom out" disabled={zoom <= .5} onClick={() => setZoom(z => Math.max(.5, z / 1.3))}>−</button><span>{Math.round(zoom * 100)}%</span><button aria-label="Zoom in" disabled={zoom >= 12} onClick={() => setZoom(z => Math.min(12, z * 1.3))}>+</button><button className="map-fit" onClick={resetCamera}>Fit</button></div>
           <span className="map-canvas-note">Drag empty space to pan · Grid: 5 ft</span>
         </div> : <div className="map-elevation" aria-label={`Rack positions in aisle ${aisle?.number}, bay ${bay}`}>
-          <div className="map-bay-pager"><button disabled={!aisle || bay === bayNumbers[0]} onClick={() => { const list = [...aisle!.bays.keys()].sort((a,b) => a-b), i = list.indexOf(bay!); if (i > 0) openBay(list[i - 1]); }}>? Previous bay</button><span>Bay {number(bay!)} of {aisle?.bays.size}</span><button disabled={!aisle || bay === bayNumbers[bayNumbers.length - 1]} onClick={() => { const list = [...aisle!.bays.keys()].sort((a,b) => a-b), i = list.indexOf(bay!); if (i < list.length - 1) openBay(list[i + 1]); }}>Next bay ?</button></div><div className="map-elevation-note"><span className="map-orientation-badge">FRONT ELEVATION</span><p>Select a position to open its inventory, photos and available actions.</p></div>
+          <div className="map-bay-pager"><button disabled={!aisle || bay === bayNumbers[0]} onClick={() => { const list = [...aisle!.bays.keys()].sort((a,b) => a-b), i = list.indexOf(bay!); if (i > 0) openBay(list[i - 1]); }}>Previous bay</button><span>Bay {number(bay!)} of {aisle?.bays.size}</span><button disabled={!aisle || bay === bayNumbers[bayNumbers.length - 1]} onClick={() => { const list = [...aisle!.bays.keys()].sort((a,b) => a-b), i = list.indexOf(bay!); if (i < list.length - 1) openBay(list[i + 1]); }}>Next bay</button></div><div className="map-elevation-note"><span className="map-orientation-badge">FRONT ELEVATION</span><p>Select a position to open its inventory, photos and available actions.</p></div>
           <div className="map-rack-faces">{sides.map(side => <section className="map-rack" key={side}><div className="map-rack-title"><span>{side === 'L' ? 'Left rack' : side === 'R' ? 'Right rack' : side}</span><code>A{number(aisle?.number ?? 0)} · B{number(bay)}</code></div>
             {levels.map(level => <div className="map-rack-level" key={level}><span className="map-level-label">L{number(level)}</span><div className="map-rack-cells">{bayLocations.filter(l => (l.side ?? 'Rack') === side && (l.level ?? 1) === level).sort((a, b) => (a.bin ?? 0) - (b.bin ?? 0)).map(l => {
               const stock = index.byLocation.get(l.id) ?? [], first = stock.find(r => r.quantity > 0), state = status(l);
@@ -210,7 +216,7 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
         </div>}
         {equipment && <section className="map-equipment-card"><div><span className="map-kicker">{robotState ? 'LOCAL SIMULATION / EQUIPMENT' : 'PLANNED EQUIPMENT'}</span><h3>{equipment.label}</h3><p>{equipmentCatalog.find(e => e.id === equipment.kind)?.name} ? {equipment.task} ? {equipment.route.length} route waypoints</p><small>{robotState ? `${robotState.status} ? ${Math.round(robotState.battery)}% battery ? ${robotState.reason || 'Saved simulation state'}` : `${equipment.sourceId || 'No source configured'} ? ${equipment.targetId || 'No destination configured'}`}</small></div><button aria-label="Close equipment details" onClick={() => setEquipmentId('')}>?</button></section>}
         <div className="map-legend"><span><i className="occupied" />Occupied</span><span><i className="empty" />Available</span><span><i className="held" />On hold</span><span className="map-legend-note">Saved warehouse data · Lengths in feet</span></div>
-        {selectedOnView && <LocationDetail location={selectedLocation} records={index.byLocation.get(selected) ?? []} capacity={config.locationRules?.find(r => r.locationId === selected)} onOperation={onOperation} onAdd={onAddRecord} onEdit={onEditRecord} />}
+        {selectedOnView && !stationId && <LocationDetail location={selectedLocation} records={index.byLocation.get(selected) ?? []} capacity={config.locationRules?.find(r => r.locationId === selected)} onOperation={onOperation} onAdd={onAddRecord} onEdit={onEditRecord} />}
         {!aisle && <div className="map-area-cards">{zones.filter(z => z.id !== 'storage' && (focus === 'all' || z.id === focus)).map(z => {
           const locations = activeLocations.filter(l => l.zone === z.id);
           return <section className="map-area-card" key={z.id}><div><i style={{ background: z.color }} /><strong>{z.name}</strong><small>{locations.length} locations</small></div>{locations.length ? locations.map(l => {
@@ -220,6 +226,12 @@ function WarehouseMap({ config, records = [], selected = '', onSelect, focus = '
         })}</div>}
       </div>
     </div>
+    {popupLocation && <StationPopup location={popupLocation} records={index.byLocation.get(popupLocation.id) ?? []} onClose={() => setStationId('')}>
+      <LocationDetail location={popupLocation} records={index.byLocation.get(popupLocation.id) ?? []} capacity={config.locationRules?.find(r => r.locationId === popupLocation.id)}
+        onOperation={onOperation ? (record, type) => { setStationId(''); onOperation(record, type); } : undefined}
+        onAdd={onAddRecord ? location => { setStationId(''); onAddRecord(location); } : undefined}
+        onEdit={onEditRecord ? (location, record) => { setStationId(''); onEditRecord(location, record); } : undefined} />
+    </StationPopup>}
   </section>;
 }
 

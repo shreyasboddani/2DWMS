@@ -518,6 +518,7 @@ const numericFields: Record<
 function Builder() {
   const [draftParams, setDraftParams] = useSearchParams();
   const draftQuery = draftParams.get("draft");
+  const studioQuery = draftParams.get("studio") === "1";
   const draftMounted = useRef(true);
   useEffect(() => {
     draftMounted.current = true;
@@ -551,7 +552,10 @@ function Builder() {
           const r = await api<{ warehouse: Warehouse }>("/warehouses/" + id);
           if (cancelled) return;
           setExisting(r.warehouse);
-          if (!draftQuery) setConfig(r.warehouse.config);
+          if (!draftQuery) {
+            setConfig(r.warehouse.config);
+            if (studioQuery) setDesignOpen(true);
+          }
         }
         if (draftQuery && draftRef.current?.id !== draftQuery) {
           const r = await api<{ draft: DesignDraft }>("/drafts/" + draftQuery);
@@ -572,7 +576,7 @@ function Builder() {
     return () => {
       cancelled = true;
     };
-  }, [id, draftQuery]);
+  }, [id, draftQuery, studioQuery]);
   const saveDraft = useCallback(
     (
       next: WarehouseConfig,
@@ -1721,9 +1725,9 @@ function Twin({ preview = false }: { preview?: boolean }) {
           {!preview && (
             <Link
               className="button secondary small"
-              to={"/app/warehouses/" + id + "/edit"}
+              to={"/app/warehouses/" + id + "/edit?studio=1"}
             >
-              Edit layout
+              Design studio
             </Link>
           )}
           <button
@@ -1817,6 +1821,7 @@ function Twin({ preview = false }: { preview?: boolean }) {
               if (zone !== 'all' && layout.locations.find(l => l.id === id)?.zone !== zone) setZone('all');
             }}
             focus={zone}
+            onOpenStudio={preview ? undefined : () => navigate("/app/warehouses/" + id + "/edit?studio=1")}
             automation={warehouse.automation}
             onOperation={preview ? undefined : (record, type) => setOperation({ record, type })}
             onAddRecord={preview ? undefined : (location) => setEditor({ location })}

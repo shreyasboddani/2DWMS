@@ -46,3 +46,10 @@ The client uses SVG/HTML for warehouse views and design walkthroughs. Scene-rela
 Four metric cards, address/SKU/item search, aisle/bay directory, breadcrumbs, Back/Forward history, floor tabs and a measured overview form the operations workspace. The aisle schematic orders bays horizontally left to right. Rack elevations expose every face/level/position. Docks, workstations and equipment are selectable. Location panels show photos, separate record quantities, manifest/schedule/destination fields and existing allowed operations. Expected/dispatched trucks are not drawn at doors. Robots and routes show planned/local-simulation state.
 
 Support pan/zoom/fit, keyboard-operable map targets, directory alternatives, responsive inspector stacking and reduced motion. See 2D_WMS_COVERAGE.md for feature coverage and verification limits.
+
+
+## Accessible studio entry and station diagrams - 2026-10-26
+
+Saved warehouse views expose Design studio in both the header and map. The edit route's studio=1 parameter opens the editor only after saved configuration loads. Multi-select, Select aisles, Group selection, Ungroup and Rotate selection supplement pointer/numeric placement and even spacing. Groups move together using drag, arrow keys or positional inputs; duplicate-module creates an independent module.
+
+Dock, packing, staging, QC and returns selections open a focus-contained station dialog with a flat explanatory diagram, canonical record/status summary, cargo/schedule/destination details and existing workflow actions. Diagrams are explicitly illustrative, not extra simulated inventory. Close the station dialog before opening an operation/record dialog; focus restoration must not steal focus from the new dialog. Increase canvas height, card padding and hit targets for created facilities without changing saved geometry.

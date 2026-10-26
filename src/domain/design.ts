@@ -227,6 +227,7 @@ const pointSchema = z.object({
 });
 export const moduleSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
+  groupId: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/).optional(),
   kind: z.enum([...equipmentCatalog.map((e) => e.id), "area"]),
   label: z.string().trim().min(1).max(80),
   x: z.number(),

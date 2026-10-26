@@ -52,7 +52,7 @@ export function Modal({
       document.removeEventListener("keydown", key);
       document.body.style.overflow = overflow;
       requestAnimationFrame(() => {
-        if (prior?.isConnected) prior.focus();
+        if (prior?.isConnected && !document.querySelector('[role="dialog"][aria-modal="true"]')) prior.focus();
       });
     };
   }, []);

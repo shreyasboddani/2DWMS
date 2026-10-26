@@ -61,3 +61,8 @@ POST `/api/v1/warehouses/:id/images` accepts base64 JPEG/PNG/WebP, validates its
 Archived/restored warehouses retain their image assets. Unattached uploads are currently retained; automated orphan cleanup and retention controls are not implemented. Database startup creates the new table; restart the development API after this update.
 
 `generateLayout(config, 'structure')` excludes storage-bin addresses for previews while retaining rack geometry and computed capacity. It is not an operational validation substitute. The default full layout remains the source for inventory, mapping and saved-data validation. Cached derivations are read-only and invalidated by configuration changes, including nested edits. The weak-key cache permits unused configurations to be collected.
+
+
+## Layout groups - 2026-10-26
+
+Design modules accept optional groupId (1-64 letters, numbers, underscores or hyphens), scoped to their floor. A group does not change module IDs, address numbers, inventory or external mappings. Selection expands to all members; group movement translates centers and robot waypoints by the same delta. Group rotation turns member centers, orientations and routes around their mean center. Ungrouping removes only metadata. All transformations are immutable domain functions in designGroups.ts and remain subject to the existing spatial/address validation before operational save. Undo/redo and drafts include this optional field without a database migration.

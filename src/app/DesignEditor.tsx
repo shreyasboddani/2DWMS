@@ -36,6 +36,7 @@ import type {
   DesignPoint,
   EquipmentKind,
 } from "../domain/design";
+import { groupedSelection, groupModules, ungroupModules, moveModules, rotateModules } from "../domain/designGroups";
 import { Icon } from "./ui";
 import { Warehouse2D } from "./Warehouse2D";
 type Tool = "select" | "outline" | "area" | "route";
@@ -90,6 +91,7 @@ export function DesignEditor({
     [showGrid, setShowGrid] = useState(true),
     [message, setMessage] = useState("");
   const [followResize, setFollowResize] = useState(true);
+  const [multiSelect, setMultiSelect] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [siteWidth, setSiteWidth] = useState(config.width),
     [siteDepth, setSiteDepth] = useState(config.depth);
@@ -260,6 +262,10 @@ export function DesignEditor({
     });
   const updateModule = (patch: Partial<DesignModule>) => {
     if (!module) return;
+    if (module.groupId && (patch.x !== undefined || patch.z !== undefined)) {
+      changeFloor(moveModules(floor, [module.id], (patch.x ?? module.x) - module.x, (patch.z ?? module.z) - module.z));
+      return;
+    }
     changeFloor(updateDesignModule(floor, module.id, patch, followResize));
   };
   const snap = (n: number) => Math.round(n / design.grid) * design.grid;
@@ -331,11 +337,13 @@ export function DesignEditor({
       return;
     }
     if (id) {
-      const ids = e.shiftKey
-        ? [...new Set([...selected, id])]
-        : selected.includes(id)
-          ? selected
-          : [id];
+      const members = groupedSelection(floor, [id]);
+      if (e.shiftKey || multiSelect) {
+        const allSelected = members.every(member => selected.includes(member));
+        setSelected(allSelected ? selected.filter(member => !members.includes(member)) : groupedSelection(floor, [...selected, ...members]));
+        return;
+      }
+      const ids = selected.includes(id) ? groupedSelection(floor, selected) : members;
       setSelected(ids);
       gesture.current = { kind: "move", start: p, original: design, ids };
     } else setSelected([]);
@@ -358,22 +366,7 @@ export function DesignEditor({
                 ...f,
                 outline: f.outline.map((v, i) => (i === g.index ? p : v)),
               }
-            : {
-                ...f,
-                modules: f.modules.map((m) =>
-                  g.ids.includes(m.id)
-                    ? {
-                        ...m,
-                        x: snap(m.x + p.x - g.start.x),
-                        z: snap(m.z + p.z - g.start.z),
-                        route: m.route.map((v) => ({
-                          x: snap(v.x + p.x - g.start.x),
-                          z: snap(v.z + p.z - g.start.z),
-                        })),
-                      }
-                    : m,
-                ),
-              },
+            : moveModules(f, g.ids, snap(p.x - g.start.x), snap(p.z - g.start.z)),
       ),
     };
     setDesign(next);
@@ -680,6 +673,14 @@ export function DesignEditor({
             2D walkthrough
           </button>
         </div>
+        {!preview && <div className="design-group-controls" aria-label="Group and arrange layout">
+          <button aria-pressed={multiSelect} onClick={() => { setMultiSelect(v => !v); setTool("select"); }}>Multi-select</button>
+          <button onClick={() => { setSelected(groupedSelection(floor, floor.modules.filter(m => m.kind === 'aisle').map(m => m.id))); setTool('select'); setMultiSelect(false); }} disabled={!floor.modules.some(m => m.kind === 'aisle')}>Select aisles</button>
+          <button disabled={selected.length < 2} onClick={() => { changeFloor(groupModules(floor, selected, 'group-' + crypto.randomUUID())); setMultiSelect(false); setMessage('Selection grouped. Drag any member to move the complete group.'); }}>Group selection</button>
+          <button disabled={!floor.modules.some(m => selected.includes(m.id) && m.groupId)} onClick={() => { changeFloor(ungroupModules(floor, selected)); setMessage('Selection ungrouped.'); }}>Ungroup</button>
+          <button disabled={!selected.length} onClick={() => changeFloor(rotateModules(floor, selected))}>Rotate selection 90 degrees</button>
+          <button disabled={!selected.length} onClick={() => setSelected([])}>Clear selection</button><span>{selected.length ? `${selected.length} selected` : 'Use Multi-select or Shift-click'}</span>
+        </div>}
         {!preview && (
           <>
             <button
@@ -971,22 +972,7 @@ export function DesignEditor({
                         : e.key === "ArrowDown"
                           ? step
                           : 0;
-                    changeFloor({
-                      ...floor,
-                      modules: floor.modules.map((m) =>
-                        selected.includes(m.id)
-                          ? {
-                              ...m,
-                              x: snap(m.x + dx),
-                              z: snap(m.z + dz),
-                              route: m.route.map((p) => ({
-                                x: snap(p.x + dx),
-                                z: snap(p.z + dz),
-                              })),
-                            }
-                          : m,
-                      ),
-                    });
+                    changeFloor(moveModules(floor, selected, dx, dz));
                   }
                   if (e.key === "Delete" && selected.length) {
                     e.preventDefault();
@@ -1667,6 +1653,7 @@ export function DesignEditor({
                     const next = {
                       ...module,
                       id: crypto.randomUUID(),
+                      groupId: undefined,
                       number:
                         Math.max(
                           0,
@@ -1804,7 +1791,7 @@ export function DesignEditor({
                 <h3>Module directory</h3>
                 <div className="design-directory">
                   {floor.modules.map((m) => (
-                    <button key={m.id} onClick={() => setSelected([m.id])}>
+                    <button key={m.id} onClick={() => setSelected(groupedSelection(floor, [m.id]))}>
                       {m.label}
                       <small>
                         {m.kind} · {formatFeet(m.x)}, {formatFeet(m.z)} ft
